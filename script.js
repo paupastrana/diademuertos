@@ -12,6 +12,11 @@ maskImage.onload = () => {
     imageLoaded = true;
 };
 
+// Ajustes de la máscara
+const SCALE_WIDTH = 1.4;
+const SCALE_HEIGHT = 1.2;
+const OFFSET_Y = -0.12;
+
 function onResults(results) {
     canvasCtx.save();
 
@@ -30,72 +35,69 @@ function onResults(results) {
 
     if (
         results.multiFaceLandmarks &&
-        results.multiFaceLandmarks.length > 0
+        results.multiFaceLandmarks.length > 0 &&
+        imageLoaded
     ) {
-        const landmarks = results.multiFaceLandmarks[0];
+        const lm = results.multiFaceLandmarks[0];
 
-        const forehead = landmarks[10];
-        const chin = landmarks[152];
-        const leftCheek = landmarks[234];
-        const rightCheek = landmarks[454];
+        // Puntos de referencia
+        const forehead = lm[10];
+        const chin = lm[152];
+        const leftCheek = lm[234];
+        const rightCheek = lm[454];
 
-        const fx = forehead.x * canvasElement.width;
-        const fy = forehead.y * canvasElement.height;
+        const leftEye = lm[33];
+        const rightEye = lm[263];
 
-        const cx = chin.x * canvasElement.width;
-        const cy = chin.y * canvasElement.height;
+        // Conversión a píxeles
+        const px = p => p.x * canvasElement.width;
+        const py = p => p.y * canvasElement.height;
 
-        const lcx = leftCheek.x * canvasElement.width;
-        const rcx = rightCheek.x * canvasElement.width;
+        // Centro facial
+        const centerX = (px(forehead) + px(chin)) / 2;
+        const centerY =
+            (py(forehead) + py(chin)) / 2;
+
+        // Ancho facial visible
+        const cheekWidth = Math.hypot(
+            px(rightCheek) - px(leftCheek),
+            py(rightCheek) - py(leftCheek)
+        );
 
         // Tamaño de la máscara
-        const faceWidth = Math.abs(rcx - lcx) * 1.4;
-        const faceHeight = Math.abs(cy - fy) * 1.2;
+        const faceWidth = cheekWidth * SCALE_WIDTH;
+        const faceHeight = faceWidth *
+            (maskImage.height / maskImage.width);
 
-        // Centro de la cara
-        const centerX = (fx + cx) / 2;
+        // Inclinación de la cabeza
+        const dx = px(rightEye) - px(leftEye);
+        const dy = py(rightEye) - py(leftEye);
+        const angle = Math.atan2(dy, dx);
 
-        // AJUSTE VERTICAL:
-        // Un valor negativo sube la máscara.
-        const offsetY = -faceHeight * 0.12;
-        const centerY = (fy + cy) / 2 + offsetY;
+        // Desplazamiento vertical
+        const adjustedY = centerY + faceHeight * OFFSET_Y;
 
-        if (imageLoaded) {
-            canvasCtx.save();
+        canvasCtx.save();
 
-            canvasCtx.translate(centerX, centerY);
+        canvasCtx.translate(centerX, adjustedY);
+        canvasCtx.rotate(angle);
 
-            // Rotación según la inclinación de la cabeza
-            const leftEye = landmarks[33];
-            const rightEye = landmarks[263];
+        canvasCtx.drawImage(
+            maskImage,
+            -faceWidth / 2,
+            -faceHeight / 2,
+            faceWidth,
+            faceHeight
+        );
 
-            const dx =
-                (rightEye.x - leftEye.x) * canvasElement.width;
-
-            const dy =
-                (rightEye.y - leftEye.y) * canvasElement.height;
-
-            const angle = Math.atan2(dy, dx);
-
-            canvasCtx.rotate(angle);
-
-            canvasCtx.drawImage(
-                maskImage,
-                -faceWidth / 2,
-                -faceHeight / 2,
-                faceWidth,
-                faceHeight
-            );
-
-            canvasCtx.restore();
-        }
+        canvasCtx.restore();
     }
 
     canvasCtx.restore();
 }
 
 const faceMesh = new FaceMesh({
-    locateFile: (file) =>
+    locateFile: file =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
 });
 
