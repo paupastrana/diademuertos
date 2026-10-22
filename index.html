@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Máscara de Día de Muertos - Mapeo Preciso</title>
+    <title>Máscara de Día de Muertos - Malla 3D</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background-color: #121212;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        body {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
         }
         .container {
+            --ar: 1.7778;                       /* se ajusta solo al tamaño real de la cámara */
             position: relative;
-            width: 854px;
-            height: 480px;
-            max-width: 100%;
-            max-height: 100%;
+            width: min(100vw, calc(100vh * var(--ar)));
+            aspect-ratio: var(--ar);
         }
         video, canvas {
             position: absolute;
@@ -28,10 +31,40 @@
             left: 0;
             width: 100%;
             height: 100%;
-            transform: scaleX(-1); /* Efecto espejo natural */
+            transform: scaleX(-1);              /* efecto espejo natural */
         }
         video {
-            display: none; /* Ocultamos el video crudo para pintar directo en el canvas */
+            display: none;                      /* el video se pinta directo en el canvas */
+        }
+        #hint {
+            position: absolute;
+            left: 50%;
+            top: 14px;
+            transform: translateX(-50%);
+            z-index: 5;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .65);
+            border: 1px solid rgba(255, 140, 0, .6);
+            color: #ffb347;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        #recal {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            z-index: 5;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 140, 0, .6);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .65);
+            color: #ffb347;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
         }
     </style>
     <!-- Scripts de MediaPipe -->
@@ -42,6 +75,8 @@
     <div class="container">
         <video class="input_video" autoplay muted playsinline></video>
         <canvas class="output_canvas"></canvas>
+        <div id="hint"></div>
+        <button id="recal" type="button">Recalibrar</button>
     </div>
     <script src="script.js"></script>
 </body>
