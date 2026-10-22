@@ -4,7 +4,7 @@ const canvasCtx = canvasElement.getContext('2d');
 
 // Cargamos tu textura de Krita
 const maskImage = new Image();
-maskImage.src = 'mascara_textura.png';
+maskImage.src = 'mascara.png';
 let imageLoaded = false;
 maskImage.onload = () => {
     imageLoaded = true;
